@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<component name="org.athento.nuxeo.import_csv_scheduler">
+	<extension target="org.nuxeo.ecm.core.scheduler.SchedulerService"
+		point="schedule">
+		<schedule id="monthly_stuff">
+			<username>Administrator</username>
+			<eventId>import_csv_scheduler</eventId>
+			<eventCategory>default</eventCategory>
+			<!-- Every first of the month at 3am -->
+			<!-- 
+			<cronExpression>0 0 * * * ?</cronExpression>
+			-->
+			<cronExpression>0 0/2 * * * ?</cronExpression>
+			
+		</schedule>
+	</extension>
+</component>

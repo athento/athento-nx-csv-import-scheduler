@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<component 	name="org.athento.nuxeo.operations.ImportCSVFiles"
+	version="1.0.0">
+	
+	<!-- Contributing a new operation to be used for conversion -->
+	<extension target="org.nuxeo.ecm.core.operation.OperationServiceComponent"
+		point="operations">
+		<operation class="org.athento.nuxeo.operations.ImportCSVFiles" />
+	</extension>
+
+	<!-- Uses operations contributed before -->
+	<extension target="org.nuxeo.ecm.core.operation.OperationServiceComponent"
+		point="chains">
+		<chain id="ATHENTO_ImportCSVFiles">
+			<operation id="Context.SetVar">
+				<param type="string" name="name">folderToCheck</param>
+				<param type="object" name="value">/default-domain/workspaces/CSV/src</param>
+			</operation>
+			<operation id="Context.SetVar">
+				<param type="string" name="name">folderToPut</param>
+				<param type="object" name="value">/default-domain/workspaces/CSV/dst</param>
+			</operation>
+			<operation id="Athento.ImportCSVFiles">
+				<param type="String" name="folderToCheck">expr:folderToCheck</param>
+				<param type="String" name="folderToPut">expr:folderToPut</param>
+			</operation>
+<!-- 
+			<operation id="Document.Query">
+				<param type="string" name="query">expr:
+					SELECT * 
+					FROM Document 
+					WHERE dcm:path STARTSWITH '@{folderToCheck}' 
+						AND ecm:currentLifeCycleState != 'deleted' 
+						AND ecm:currentLifeCycleState != 'Passed' 
+						AND ecm:isCheckedInVersion = 0
+				</param>
+				<param type="string" name="language">NXQL</param>
+			</operation>
+			<operation id="Context.SetInputAsVar">
+				<param type="string" name="name">lista</param>
+			</operation>
+			<operation id="Context.SetVar">
+				<param type="string" name="name">tam</param>
+				<param type="object" name="value">expr:lista.size()</param>
+			</operation>
+			<operation id="Context.RunOperationOnList">
+				<param type="string" name="id">expr:tam == 0 ? "voidchain" :
+					"ArchiveDocument"
+				</param>
+				<param type="string" name="list">lista</param>
+				<param type="string" name="item">item</param>
+				<param type="boolean" name="newTx">false</param>
+				<param type="boolean" name="rollbackGlobalOnError">true</param>
+			</operation>
+		</chain>
+		<chain id="ArchiveDocument">
+			<operation id="Context.FetchDocument" />
+			<operation id="Context.SetInputAsVar">
+				<param type="string" name="name">item</param>
+			</operation>
+			<operation id="Document.FetchOrCreate">
+				<param type="string" name="path">expr:@{folderToCheck+"/"+processed}
+				</param>
+				<param type="string" name="type">Folder</param>
+				<param type="string" name="name">PROCESSED</param>
+			</operation>
+			
+		</chain>
+		<chain id="voidChain">
+			<operation id="Context.FetchDocument" />
+-->
+		</chain>
+ 	</extension>
+</component>
