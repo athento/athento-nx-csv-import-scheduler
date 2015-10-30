@@ -29,11 +29,14 @@ import org.nuxeo.ecm.core.api.PathRef;
 import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
 import org.nuxeo.ecm.core.api.impl.blob.InputStreamBlob;
 import org.nuxeo.ecm.core.api.model.PropertyNotFoundException;
+import org.nuxeo.ecm.core.lifecycle.LifeCycleService;
 import org.nuxeo.ecm.core.storage.StorageBlob;
 import org.nuxeo.ecm.csv.CSVImportLog;
 import org.nuxeo.ecm.csv.CSVImporter;
 import org.nuxeo.ecm.csv.CSVImporterImpl;
 import org.nuxeo.ecm.csv.CSVImporterOptions;
+import org.nuxeo.ecm.user.invite.AlreadyProcessedRegistrationException;
+import org.nuxeo.runtime.api.Framework;
 
 /**
  * @author athento
@@ -81,7 +84,8 @@ public class ImportCSVFiles {
 				throw new OperationException(
 					"Null folder received. Folder to put is: " + folderToPut);
 			}
-
+			LifeCycleService lifecycleService = Framework.getLocalService(
+				org.nuxeo.ecm.core.lifecycle.LifeCycleService.class);
 			CSVImporterOptions options = CSVImporterOptions.DEFAULT_OPTIONS;
 			CSVImporter csvImporter = new CSVImporterImpl();
 			DocumentModelList children = session.getChildren(folder.getRef());
@@ -100,6 +104,11 @@ public class ImportCSVFiles {
 							.getPropertyValue(ImportCSVFiles.XPATH_FILE_CONTENT);
 						if (child.getName().contains("_.trashed")) {
 							throw new PropertyNotFoundException("Ignoring trashed file: " 
+								+ child.getName());
+						}
+						if ("Processed".equals(child.getCurrentLifeCycleState())) {
+							throw new AlreadyProcessedRegistrationException(
+								"Ignoring already processed file: " 
 								+ child.getName());
 						}
 						FileBlob fb = new FileBlob(childContent.getStream());
@@ -150,6 +159,19 @@ public class ImportCSVFiles {
 								+ object);
 						}
 						includedFiles.add(object);
+						if (session.followTransition(child, "to_Processed")) {
+							if (_log.isDebugEnabled()) {
+								_log.debug("Document passed to Processed");
+							}
+						}
+					} catch (AlreadyProcessedRegistrationException exc) {
+						errors.add(exc.getMessage());
+						JSONArray jsonErrors = new JSONArray();
+						jsonErrors.addAll(errors);
+						object.put(child.getPathAsString(), jsonErrors);
+						_log.error("Ignoring File: " + object + ": " 
+								+ exc.getMessage());
+						excludedFiles.add(object);
 					} catch(PropertyNotFoundException ex) {
 						errors.add(ex.getMessage());
 						JSONArray jsonErrors = new JSONArray();

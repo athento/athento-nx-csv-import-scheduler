@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<component name="org.athento.nuxeo.csv.lifecycle"
+	version="1.0.0">
+	<require>org.nuxeo.runtime.started</require>
+	<require>org.nuxeo.ecm.core.LifecycleCoreExtensions</require> 
+	<extension target="org.nuxeo.ecm.core.lifecycle.LifeCycleService"
+		point="lifecycle">
+		<lifecycle name="default" defaultInitial="project">
+			<transitions>
+				<transition name="to_Processed" destinationState="Processed">
+					<description>from any state to Processed</description>
+				</transition>
+			</transitions>
+			<states>
+				<state name="project">
+					<transitions>
+						<transition>to_Processed</transition>
+					</transitions>
+				</state>
+			</states>
+		</lifecycle>
+	</extension>
+</component>
