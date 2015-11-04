@@ -6,12 +6,11 @@
 			<username>Administrator</username>
 			<eventId>import_csv_scheduler</eventId>
 			<eventCategory>default</eventCategory>
-			<!-- Every first of the month at 3am -->
-			<!-- 
+			<!-- Every hour -->
 			<cronExpression>0 0 * * * ?</cronExpression>
-			-->
+			<!--  For testing purposes
 			<cronExpression>0 0/2 * * * ?</cronExpression>
-			
+			-->	
 		</schedule>
 	</extension>
 </component>
