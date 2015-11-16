@@ -5,5 +5,5 @@ Bundle-SymbolicName: athento-nx-csv-import-scheduler
 Bundle-Vendor: Athento
 Bundle-Version: 1.0.0
 Require-Bundle: org.nuxeo.runtime
-Nuxeo-Component: OSGI-INF/lifecycle-contrib.xml, OSGI-INF/event-handler-contrib.xml,OSGI-INF/scheduler-contrib.xml,OSGI-INF/operations-contrib.xml
+Nuxeo-Component: OSGI-INF/event-handler-contrib.xml,OSGI-INF/scheduler-contrib.xml,OSGI-INF/operations-contrib.xml
 Created-By: Athento

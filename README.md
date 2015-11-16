@@ -27,6 +27,10 @@ You just have to compile the pom.xml using Maven and deploy the plugin in. To do
 
 Restart your nuxeo server and enjoy.
 
+#Release notes
+1.0 - contributes a lifecycle-state "processed" for File documents using transition from "project" to "processed" to avoid duplicate processing.
+2.0 - changes avoid duplicates policy. Now moves documents from src folder to processing subfolder and, when processed, to processed subfolder.
+
 #To Do
-- Extend automation chain to move processed files to a diferent folder to avoid reprocessing.
+- [done] Extend automation chain to move processed files to a diferent folder to avoid reprocessing.
 
