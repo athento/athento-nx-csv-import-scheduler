@@ -84,94 +84,105 @@ public class ImportCSVFiles {
 				throw new OperationException(
 					"Null folder received. Folder to put is: " + folderToPut);
 			}
-			LifeCycleService lifecycleService = Framework.getLocalService(
-				org.nuxeo.ecm.core.lifecycle.LifeCycleService.class);
+
+			String basePath = folder.getPathAsString();
+			DocumentModel folderProcessing = getOrCreateFolder(basePath,"processing");
+			DocumentModel folderProcessed = getOrCreateFolder(basePath,"processed");
+			DocumentModel folderProcessedOk = getOrCreateFolder(
+				folderProcessed.getPathAsString(),"processed_ok");
+			DocumentModel folderProcessedKo = getOrCreateFolder(
+				folderProcessed.getPathAsString(),"processed_with_errors");
+
 			CSVImporterOptions options = CSVImporterOptions.DEFAULT_OPTIONS;
 			CSVImporter csvImporter = new CSVImporterImpl();
 			DocumentModelList children = session.getChildren(folder.getRef());
 			if (!children.isEmpty()) {
 				_log.debug("Folder [" + folder + "] has: " + children.size()
 						+ " children");
-				
 				for (DocumentModel child : children) {
 					List<String> errors = new ArrayList<String>();
 					JSONObject object = new JSONObject();
-					if (_log.isInfoEnabled()) {
-						_log.info(" > Reading: " + child.getPathAsString());
-					}
 					try {
-						StorageBlob childContent = (StorageBlob) child
-							.getPropertyValue(ImportCSVFiles.XPATH_FILE_CONTENT);
 						if (child.getName().contains("_.trashed")) {
 							throw new PropertyNotFoundException("Ignoring trashed file: " 
 								+ child.getName());
 						}
-						if ("Processed".equals(child.getCurrentLifeCycleState())) {
-							throw new AlreadyProcessedRegistrationException(
-								"Ignoring already processed file: " 
-								+ child.getName());
-						}
-						FileBlob fb = new FileBlob(childContent.getStream());
-						if (_log.isDebugEnabled()) {
-							_log.debug("   importing CSV data from: " 
-								+ child.getPathAsString());
-						}
-						String importId = csvImporter.launchImport(session,
-							folderDestiny.getPathAsString(), fb.getFile(),
-							child.getPathAsString(), options);
-						Thread.currentThread().sleep(3000);
-						if (_log.isDebugEnabled()) {
-							_log.debug("   ...done with id [" + importId 
-								+ "] status: " 
-								+ csvImporter.getImportStatus(importId));
-						}
-						List<CSVImportLog> importLogs = csvImporter
-							.getImportLogs(importId);
-						if (_log.isDebugEnabled()) {
-							_log.debug("   importLogs size: " 
-								+ importLogs.size());
-						}
-						int total = 0;
-						for (CSVImportLog log: importLogs) {
+						if (child.isFolder()) {
 							if (_log.isDebugEnabled()) {
-								_log.debug("    > log: " + log.getMessage());
+								_log.debug("... ignoring folder: " 
+									+ child.getPathAsString());
 							}
-							if (log.isSuccess()) {
-								total = total + 1;
-							} else if (log.isError()) {
-								_log.error("Document load failed: " + log.getMessage());
-								errors.add(log.getMessage());
-							} else if (log.isSkipped()) {
-								_log.warn("Document skipped: " + log.getMessage());
-								errors.add(log.getMessage());
-							}
-						}
-						JSONArray jsonErrors = new JSONArray();
-						if (!jsonErrors.addAll(errors)) {
-							object.put(child.getPathAsString(), "" + total 
-								+ " documents loaded with no errors");
 						} else {
-							object.put(child.getPathAsString(), "" + total
-								+ " documents loaded with errors: " + jsonErrors);
-						}
-						if (_log.isDebugEnabled()) {
-							_log.debug("   Loaded data for child: " 
-								+ object);
-						}
-						includedFiles.add(object);
-						if (session.followTransition(child, "to_Processed")) {
+							if (_log.isInfoEnabled()) {
+								_log.info(" > Moving: " + child.getPathAsString());
+							}
+							DocumentModel copy = session.move(
+								child.getRef(), folderProcessing.getRef(), null);
+							if (_log.isInfoEnabled()) {
+								_log.info(" ... moved to: " + copy.getPathAsString());
+							}
+							StorageBlob childContent = (StorageBlob) copy
+								.getPropertyValue(ImportCSVFiles.XPATH_FILE_CONTENT);
+							FileBlob fb = new FileBlob(childContent.getStream());
 							if (_log.isDebugEnabled()) {
-								_log.debug("Document passed to Processed");
+								_log.debug("   importing CSV data from: " 
+									+ copy.getPathAsString());
+							}
+							String importId = csvImporter.launchImport(session,
+								folderDestiny.getPathAsString(), fb.getFile(),
+								copy.getPathAsString(), options);
+							Thread.currentThread().sleep(1000);
+							if (_log.isDebugEnabled()) {
+								_log.debug("   ...done with id [" + importId 
+									+ "] status: " 
+									+ csvImporter.getImportStatus(importId));
+							}
+							List<CSVImportLog> importLogs = csvImporter
+								.getImportLogs(importId);
+							if (_log.isDebugEnabled()) {
+								_log.debug("   importLogs size: " 
+									+ importLogs.size());
+							}
+							int total = 0;
+							for (CSVImportLog log: importLogs) {
+								if (_log.isDebugEnabled()) {
+									_log.debug("    > log: " + log.getMessage());
+								}
+								if (log.isSuccess()) {
+									total = total + 1;
+								} else if (log.isError()) {
+									_log.error("Document load failed: " + log.getMessage());
+									errors.add(log.getMessage());
+								} else if (log.isSkipped()) {
+									_log.warn("Document skipped: " + log.getMessage());
+									errors.add(log.getMessage());
+								}
+							}
+							DocumentModel folderToMove = null;
+							JSONArray jsonErrors = new JSONArray();
+							if (!jsonErrors.addAll(errors)) {
+								object.put(child.getPathAsString(), "" + total 
+									+ " documents loaded with no errors");
+								folderToMove = folderProcessedOk;
+							} else {
+								object.put(child.getPathAsString(), "" + total
+									+ " documents loaded with errors: " + jsonErrors);
+								folderToMove = folderProcessedKo;
+							}
+							if (_log.isDebugEnabled()) {
+								_log.debug("   Loaded data for child: " 
+									+ object);
+							}
+							includedFiles.add(object);
+							if (_log.isInfoEnabled()) {
+								_log.info(" < Ending. Moving from: " + copy.getPathAsString());
+							}
+							DocumentModel copy2 = session.move(
+								copy.getRef(), folderToMove.getRef(), null);
+							if (_log.isInfoEnabled()) {
+								_log.info(" ! moved to: " + copy2.getPathAsString());
 							}
 						}
-					} catch (AlreadyProcessedRegistrationException exc) {
-						errors.add(exc.getMessage());
-						JSONArray jsonErrors = new JSONArray();
-						jsonErrors.addAll(errors);
-						object.put(child.getPathAsString(), jsonErrors);
-						_log.error("Ignoring File: " + object + ": " 
-								+ exc.getMessage());
-						excludedFiles.add(object);
 					} catch(PropertyNotFoundException ex) {
 						errors.add(ex.getMessage());
 						JSONArray jsonErrors = new JSONArray();
@@ -185,6 +196,7 @@ public class ImportCSVFiles {
 						_log.warn("-- Some errors (" + errors.size() 
 							+ ") found for child: " + child.getPathAsString());
 					}
+				
 				}
 			} else {
 				if (_log.isDebugEnabled()) {
@@ -212,6 +224,28 @@ public class ImportCSVFiles {
 		}
 		return new InputStreamBlob(new ByteArrayInputStream(array.toString()
 				.getBytes("UTF-8")), "application/json");
+	}
+
+	private DocumentModel getOrCreateFolder(String basePath, String folderName) {
+		if (_log.isDebugEnabled()) {
+			_log.debug("Searching document: " + folderName);
+			_log.debug(" in folder: " + basePath);
+		}
+		PathRef pref = new PathRef(basePath + "/" + folderName);
+		DocumentModel folder = null;
+		try {
+			folder = session.getDocument(pref);
+		} catch (Exception e) {
+			if (_log.isDebugEnabled()) {
+				_log.debug("NOT FOUND! " + folderName + " in " + basePath);
+			}
+			_log.info(" => creating folder: " + pref);
+			folder = session.createDocumentModel(
+				basePath , folderName, "Folder");
+			folder.setPropertyValue("dc:title", folderName);
+			folder = session.createDocument(folder);
+		}		
+		return folder;
 	}
 
 	@Param(name = "folderToCheck", required = true)
