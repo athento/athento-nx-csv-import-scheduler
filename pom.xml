@@ -3,7 +3,6 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.athento.nuxeo</groupId>
 	<artifactId>athento-nx-csv-import-scheduler</artifactId>
-	<version>2.0</version>
 	<name>Athento NX CSV Import Scheduler</name>
 	<description>This plugin allows you to set a system folder where Nuxeo will control to get CSV files and create documents using ImportCSV already existing funcionality https://doc.nuxeo.com/display/NXDOC/Nuxeo+CSV 
   </description>
@@ -160,4 +159,5 @@
 
 	</repositories>
 
+	<version>3.0</version>
 </project>

@@ -1,9 +1,10 @@
 Manifest-Version: 1.0
-Bundle-Name: Athento NX CSV Import Scheduler
-Bundle-ManifestVersion: 2
-Bundle-SymbolicName: athento-nx-csv-import-scheduler
-Bundle-Vendor: Athento
-Bundle-Version: 1.0.0
 Require-Bundle: org.nuxeo.runtime
-Nuxeo-Component: OSGI-INF/event-handler-contrib.xml,OSGI-INF/scheduler-contrib.xml,OSGI-INF/operations-contrib.xml
+Bundle-Vendor: Athento
+Bundle-Version: 3.0
+Bundle-Name: Athento NX Import CSV files from folder
 Created-By: Athento
+Nuxeo-Component: OSGI-INF/operations-contrib.xml, OSGI-INF/nxaudit-contrib.xml
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: org.athento.nuxeo.csv.importFilesFromFolder
+
