@@ -49,6 +49,7 @@ import org.nuxeo.ecm.core.event.impl.UnboundEventContext;
 import org.nuxeo.ecm.core.lifecycle.LifeCycleService;
 import org.nuxeo.ecm.core.storage.StorageBlob;
 import org.nuxeo.ecm.csv.CSVImportLog;
+import org.nuxeo.ecm.csv.CSVImportStatus;
 import org.nuxeo.ecm.csv.CSVImporter;
 import org.nuxeo.ecm.csv.CSVImporterImpl;
 import org.nuxeo.ecm.csv.CSVImporterOptions;
@@ -131,14 +132,16 @@ public class ImportCSVFiles {
 				for (DocumentModel child : children) {
 					List<String> errors = new ArrayList<String>();
 					try {
-						if (child.getName().contains("_.trashed")) {
-							throw new PropertyNotFoundException(
-									"Ignoring trashed file: " + child.getName());
-						}
-						if (child.isFolder()) {
+						
+						if ("deleted".equals(child.getCurrentLifeCycleState())) {
+							if (_log.isDebugEnabled()) {
+								_log.debug("... ignoring deleted file: "
+									+ child.getPathAsString());
+							}
+						}else if (child.isFolder()) {
 							if (_log.isDebugEnabled()) {
 								_log.debug("... ignoring folder: "
-										+ child.getPathAsString());
+									+ child.getPathAsString());
 							}
 						} else {
 							if (_log.isInfoEnabled()) {
@@ -228,9 +231,9 @@ public class ImportCSVFiles {
 		DefaultDocumentTreeSorter sorter = new DefaultDocumentTreeSorter();
 		sorter.setSortPropertyPath("dc:created");
 		Collections.sort(processingChildren, sorter);
-		List<String> errors = new ArrayList<String>();
 		JSONObject object = new JSONObject();
 		for (DocumentModel processingChild: processingChildren){
+			List<String> errors = new ArrayList<String>();
 			StorageBlob childContent = (StorageBlob) processingChild
 				.getPropertyValue(ImportCSVFiles.XPATH_FILE_CONTENT);
 			FileBlob fb = new FileBlob(childContent.getStream());
@@ -245,16 +248,14 @@ public class ImportCSVFiles {
 				_log.info("  >> importing CSV: "
 						+ processingChild.getPathAsString());
 			}
+
 			String importId = csvImporter.launchImport(session,
 				folderDestiny.getPathAsString(),
 				fb.getFile(), processingChild.getPathAsString(),
 				options);
-			Thread.currentThread().sleep(2000);
-			if (_log.isInfoEnabled()) {
-				_log.info("   << CSV import done with id [" + importId
-						+ "] status: "
-						+ csvImporter.getImportStatus(importId));
-			}
+
+			waitForImport(importId, csvImporter, processingChild);
+
 			List<CSVImportLog> importLogs = csvImporter
 				.getImportLogs(importId);
 			if (_log.isDebugEnabled()) {
@@ -396,6 +397,26 @@ public class ImportCSVFiles {
 			}
 		}
 
+	}
+
+	private void waitForImport(
+		String importId, CSVImporter csvImporter, DocumentModel processingChild) {
+		CSVImportStatus status = csvImporter.getImportStatus(importId);
+		while (status != null && !status.isComplete()) {
+			if (_log.isDebugEnabled()) {
+				_log.debug("   waiting for [" + processingChild.getPathAsString() +"] CSVImportId [" + importId + "] status: " + status.getState());
+			}
+			try {
+				Thread.currentThread().sleep(500);
+			} catch (InterruptedException e) {
+				_log.error("unable to sleep for 500 ms");
+			}
+			status = csvImporter.getImportStatus(importId);
+		}
+		if (_log.isInfoEnabled()) {
+			_log.info("   << CSV import done with id [" + importId
+				+ "] status: " + (status!=null?status.getState():" none"));
+		}
 	}
 
 	@Param(name = "folderToCheck", required = true)
