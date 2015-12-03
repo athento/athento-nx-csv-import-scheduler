@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="org.nuxeo.ecm.platform.audit.service.NXAuditEventsService">
+	<documentation>
+		Service that deals with audit.
+		<p />
+		Most of the work is done at EJB layer though.
+
+		This supports JMS events based
+		notifications on a dedicated topic.
+
+		@version 1.0
+		@author Julien Anguenot
+	</documentation>
+
+	<!-- needed so that activation has access to persistence -->
+	<require>org.nuxeo.ecm.platform.audit.service.persistence</require>
+
+	<extension target="org.nuxeo.ecm.platform.audit.service.NXAuditEventsService"
+		point="event">
+		<documentation>
+			Those default auditable events match Nuxeo core base events.
+			<p />
+			If you are sending new Nuxeo core events and want them audited, this
+			is
+			the place to declare them NXAudit side.
+		</documentation>
+
+		<event name="beginProcess" />
+		<event name="fileReady" />
+		<event name="CSVparse_begin" />
+		<event name="CSVparse_end" />
+		<event name="endProcess" />
+	</extension>
+</component>
