@@ -30,7 +30,7 @@ Restart your nuxeo server and enjoy.
 #Release notes
 - 1.0 - contributes a lifecycle-state "processed" for File documents using transition from "project" to "processed" to avoid duplicate processing.
 - 2.0 - changes avoid duplicates policy. Now moves documents from src folder to processing subfolder and, when processed, to processed subfolder.
-- 3.0 - waits for every CSV import to complete after moving to the next
+- 3.0 - waits for every CSV import to complete before moving to the next
 
 #To Do
 - [done] Extend automation chain to move processed files to a diferent folder to avoid reprocessing.
