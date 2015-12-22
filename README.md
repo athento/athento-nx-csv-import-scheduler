@@ -2,9 +2,9 @@
 
 #Synopsis
 
-This plugin reads special CSV files (https://doc.nuxeo.com/display/NXDOC/Nuxeo+CSV) from path /default/default-domain/workspaces/CSV/src and import Document contained in /default/default-domain/workspaces/CSV/dst every 1 hour.
+This plugin contributes an operation to read special Nuxeo-formattede CSV files (https://doc.nuxeo.com/display/NXDOC/Nuxeo+CSV) from a given path "folderToCheck" and import Documents contained in "folderToPut".
 
-Also provides an operation to invoke it manually from REST client:
+Example for a REST client:
 
 http://localhost:8080/nuxeo/site/automation/Athento.ImportCSVFiles
 ```json
@@ -28,9 +28,11 @@ You just have to compile the pom.xml using Maven and deploy the plugin in. To do
 Restart your nuxeo server and enjoy.
 
 #Release notes
-1.0 - contributes a lifecycle-state "processed" for File documents using transition from "project" to "processed" to avoid duplicate processing.
-2.0 - changes avoid duplicates policy. Now moves documents from src folder to processing subfolder and, when processed, to processed subfolder.
+- 1.0 - contributes a lifecycle-state "processed" for File documents using transition from "project" to "processed" to avoid duplicate processing.
+- 2.0 - changes avoid duplicates policy. Now moves documents from src folder to processing subfolder and, when processed, to processed subfolder.
+- 3.0 - waits for every CSV import to complete after moving to the next
 
 #To Do
 - [done] Extend automation chain to move processed files to a diferent folder to avoid reprocessing.
+- [done] Wait for every thread to finish after starting next import.
 
