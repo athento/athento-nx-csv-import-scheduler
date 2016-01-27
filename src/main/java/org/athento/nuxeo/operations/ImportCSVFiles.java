@@ -233,50 +233,54 @@ public class ImportCSVFiles {
 		Collections.sort(processingChildren, sorter);
 		JSONObject object = new JSONObject();
 		for (DocumentModel processingChild: processingChildren){
+			int total = 0;
 			List<String> errors = new ArrayList<String>();
 			StorageBlob childContent = (StorageBlob) processingChild
 				.getPropertyValue(ImportCSVFiles.XPATH_FILE_CONTENT);
-			FileBlob fb = new FileBlob(childContent.getStream());
-			if (_log.isDebugEnabled()) {
-				_log.debug(" |+| importing CSV data from: "
-						+ processingChild.getPathAsString());
-			}
-			registerEvent(
-				"CSVparse_begin","File: " 
-					+ processingChild, session.getPrincipal());
-			if (_log.isInfoEnabled()) {
-				_log.info("  >> importing CSV: "
-						+ processingChild.getPathAsString());
-			}
-
-			String importId = csvImporter.launchImport(session,
-				folderDestiny.getPathAsString(),
-				fb.getFile(), processingChild.getPathAsString(),
-				options);
-
-			waitForImport(importId, csvImporter, processingChild);
-
-			List<CSVImportLog> importLogs = csvImporter
-				.getImportLogs(importId);
-			if (_log.isDebugEnabled()) {
-				_log.debug("   importLogs size: "
-					+ importLogs.size());
-			}
-			int total = 0;
-			for (CSVImportLog log : importLogs) {
+			if (childContent == null) {
+				errors.add("No file:content found in: " + processingChild);
+			} else {
+				FileBlob fb = new FileBlob(childContent.getStream());
 				if (_log.isDebugEnabled()) {
-					_log.debug("    > log: " + log.getMessage());
+					_log.debug(" |+| importing CSV data from: "
+							+ processingChild.getPathAsString());
 				}
-				if (log.isSuccess()) {
-					total = total + 1;
-				} else if (log.isError()) {
-					_log.error("Document load failed: "
-							+ log.getMessage());
-					errors.add(log.getMessage());
-				} else if (log.isSkipped()) {
-					_log.warn("Document skipped: "
-							+ log.getMessage());
-					errors.add(log.getMessage());
+				registerEvent(
+					"CSVparse_begin","File: " 
+						+ processingChild, session.getPrincipal());
+				if (_log.isInfoEnabled()) {
+					_log.info("  >> importing CSV: "
+							+ processingChild.getPathAsString());
+				}
+	
+				String importId = csvImporter.launchImport(session,
+					folderDestiny.getPathAsString(),
+					fb.getFile(), processingChild.getPathAsString(),
+					options);
+	
+				waitForImport(importId, csvImporter, processingChild);
+	
+				List<CSVImportLog> importLogs = csvImporter
+					.getImportLogs(importId);
+				if (_log.isDebugEnabled()) {
+					_log.debug("   importLogs size: "
+						+ importLogs.size());
+				}
+				for (CSVImportLog log : importLogs) {
+					if (_log.isDebugEnabled()) {
+						_log.debug("    > log: " + log.getMessage());
+					}
+					if (log.isSuccess()) {
+						total = total + 1;
+					} else if (log.isError()) {
+						_log.error("Document load failed: "
+								+ log.getMessage());
+						errors.add(log.getMessage());
+					} else if (log.isSkipped()) {
+						_log.warn("Document skipped: "
+								+ log.getMessage());
+						errors.add(log.getMessage());
+					}
 				}
 			}
 			DocumentModel folderToMove = null;
