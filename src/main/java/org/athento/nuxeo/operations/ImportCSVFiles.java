@@ -234,12 +234,14 @@ public class ImportCSVFiles {
 		JSONObject object = new JSONObject();
 		for (DocumentModel processingChild: processingChildren){
 			int total = 0;
+			long estimatedTime = 0;
 			List<String> errors = new ArrayList<String>();
 			StorageBlob childContent = (StorageBlob) processingChild
 				.getPropertyValue(ImportCSVFiles.XPATH_FILE_CONTENT);
 			if (childContent == null) {
 				errors.add("No file:content found in: " + processingChild);
 			} else {
+				long startTime = System.nanoTime();
 				FileBlob fb = new FileBlob(childContent.getStream());
 				if (_log.isDebugEnabled()) {
 					_log.debug(" |+| importing CSV data from: "
@@ -259,6 +261,8 @@ public class ImportCSVFiles {
 					options);
 	
 				waitForImport(importId, csvImporter, processingChild);
+
+				estimatedTime = System.nanoTime() - startTime;
 	
 				List<CSVImportLog> importLogs = csvImporter
 					.getImportLogs(importId);
@@ -309,7 +313,7 @@ public class ImportCSVFiles {
 					folderToMove.getRef(), null);
 			registerEvent(
 				"CSVparse_end","File: " 
-					+ copy2.getRef(), session.getPrincipal());
+					+ copy2.getRef() + " time spent: " + estimatedTime + " ms", session.getPrincipal());
 			if (_log.isInfoEnabled()) {
 				_log.info(" [ok] moved to: "
 						+ copy2.getPathAsString());
