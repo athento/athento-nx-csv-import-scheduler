@@ -313,7 +313,7 @@ public class ImportCSVFiles {
 					folderToMove.getRef(), null);
 			registerEvent(
 				"CSVparse_end","File: " 
-					+ copy2.getRef() + " time spent: " + estimatedTime + " ms", session.getPrincipal());
+					+ copy2.getRef() + " time spent: " + estimatedTime + " ns", session.getPrincipal());
 			if (_log.isInfoEnabled()) {
 				_log.info(" [ok] moved to: "
 						+ copy2.getPathAsString());
